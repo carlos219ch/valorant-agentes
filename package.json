@@ -1,0 +1,17 @@
+{
+  "name": "valorant-agentes",
+  "version": "1.0.0",
+  "description": "Fullstack app - Gestión de Agentes de Valorant",
+  "private": true,
+  "workspaces": [
+    "valorant-agentes-api",
+    "valorant-agentes-frontend"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=valorant-agentes-api",
+    "dev:frontend": "npm run dev --workspace=valorant-agentes-frontend",
+    "start:api": "npm run start --workspace=valorant-agentes-api",
+    "build:frontend": "npm run build --workspace=valorant-agentes-frontend",
+    "install:all": "npm install --workspaces"
+  }
+}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Valorant API - Tester</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #1a1a2e; color: #eee; }
+    h1 { color: #ff4655; }
+    h2 { color: #ff4655; border-bottom: 1px solid #333; padding-bottom: 8px; margin-top: 30px; }
+    button { background: #ff4655; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; margin: 5px 0; font-size: 14px; }
+    button:hover { background: #cc3344; }
+    input, textarea { width: 100%; padding: 8px; margin: 4px 0 10px 0; background: #16213e; border: 1px solid #444; color: #eee; border-radius: 4px; box-sizing: border-box; }
+    pre { background: #0f3460; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; }
+    label { font-size: 13px; color: #aaa; }
+    .token-box { background: #0f3460; padding: 10px; border-radius: 4px; word-break: break-all; font-size: 12px; color: #4fc3f7; margin: 8px 0; min-height: 20px; }
+  </style>
+</head>
+<body>
+
+<h1>Valorant Agentes API — Tester</h1>
+
+<!-- AUTH -->
+<h2>1. Registrar usuario</h2>
+<label>Nombre</label>
+<input id="reg-nombre" value="Carlos" />
+<label>Email</label>
+<input id="reg-email" value="carlos@test.com" />
+<label>Password</label>
+<input id="reg-password" value="123456" />
+<button onclick="registrar()">Registrar</button>
+<pre id="res-register">— respuesta aquí —</pre>
+
+<h2>2. Login</h2>
+<label>Email</label>
+<input id="login-email" value="carlos@test.com" />
+<label>Password</label>
+<input id="login-password" value="123456" />
+<button onclick="login()">Login</button>
+<pre id="res-login">— respuesta aquí —</pre>
+<label>Token guardado:</label>
+<div class="token-box" id="token-guardado">ninguno</div>
+
+<!-- AGENTES -->
+<h2>3. Listar agentes</h2>
+<label>Filtros opcionales: ?nombre=jett&rol=duelista&page=1&limit=10</label>
+<input id="filtros" placeholder="nombre=jett&rol=duelista" />
+<button onclick="listar()">GET /api/agentes</button>
+<pre id="res-listar">— respuesta aquí —</pre>
+
+<h2>4. Obtener agente por ID</h2>
+<input id="get-id" value="1" placeholder="ID del agente" />
+<button onclick="obtener()">GET /api/agentes/:id</button>
+<pre id="res-obtener">— respuesta aquí —</pre>
+
+<h2>5. Crear agente <small>(necesita token)</small></h2>
+<label>Nombre</label><input id="crear-nombre" value="Reyna" />
+<label>Rol (duelista / iniciador / controlador / centinela)</label>
+<input id="crear-rol" value="duelista" />
+<label>Descripción</label>
+<input id="crear-desc" value="Agente mexicana que se alimenta del alma de sus enemigos" />
+<label>País de origen</label>
+<input id="crear-pais" value="México" />
+<label>Habilidad ultimate</label>
+<input id="crear-ult" value="Dominio" />
+<button onclick="crear()">POST /api/agentes</button>
+<pre id="res-crear">— respuesta aquí —</pre>
+
+<h2>6. Actualizar agente <small>(necesita token)</small></h2>
+<input id="upd-id" value="1" placeholder="ID del agente" />
+<label>Campos a actualizar (JSON)</label>
+<textarea id="upd-body" rows="4">{"descripcion": "La duelista más letal de Valorant"}</textarea>
+<button onclick="actualizar()">PUT /api/agentes/:id</button>
+<pre id="res-actualizar">— respuesta aquí —</pre>
+
+<h2>7. Eliminar agente <small>(necesita token — soft delete)</small></h2>
+<input id="del-id" value="1" placeholder="ID del agente" />
+<button onclick="eliminar()">DELETE /api/agentes/:id</button>
+<pre id="res-eliminar">— respuesta aquí —</pre>
+
+<script>
+  const BASE = 'http://localhost:3000/api';
+  let token = '';
+
+  const mostrar = (id, data) => {
+    document.getElementById(id).textContent = JSON.stringify(data, null, 2);
+  };
+
+  async function registrar() {
+    const res = await fetch(`${BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: document.getElementById('reg-nombre').value,
+        email: document.getElementById('reg-email').value,
+        password: document.getElementById('reg-password').value,
+      })
+    });
+    mostrar('res-register', await res.json());
+  }
+
+  async function login() {
+    const res = await fetch(`${BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value,
+      })
+    });
+    const data = await res.json();
+    mostrar('res-login', data);
+    if (data.token) {
+      token = data.token;
+      document.getElementById('token-guardado').textContent = token;
+    }
+  }
+
+  async function listar() {
+    const filtros = document.getElementById('filtros').value;
+    const url = filtros ? `${BASE}/agentes?${filtros}` : `${BASE}/agentes`;
+    const res = await fetch(url);
+    mostrar('res-listar', await res.json());
+  }
+
+  async function obtener() {
+    const id = document.getElementById('get-id').value;
+    const res = await fetch(`${BASE}/agentes/${id}`);
+    mostrar('res-obtener', await res.json());
+  }
+
+  async function crear() {
+    const res = await fetch(`${BASE}/agentes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        nombre: document.getElementById('crear-nombre').value,
+        rol: document.getElementById('crear-rol').value,
+        descripcion: document.getElementById('crear-desc').value,
+        pais_origen: document.getElementById('crear-pais').value,
+        habilidad_ultimate: document.getElementById('crear-ult').value,
+      })
+    });
+    mostrar('res-crear', await res.json());
+  }
+
+  async function actualizar() {
+    const id = document.getElementById('upd-id').value;
+    const body = JSON.parse(document.getElementById('upd-body').value);
+    const res = await fetch(`${BASE}/agentes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(body)
+    });
+    mostrar('res-actualizar', await res.json());
+  }
+
+  async function eliminar() {
+    const id = document.getElementById('del-id').value;
+    const res = await fetch(`${BASE}/agentes/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    mostrar('res-eliminar', await res.json());
+  }
+</script>
+</body>
+</html>
